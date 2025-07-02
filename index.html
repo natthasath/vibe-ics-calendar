@@ -625,20 +625,67 @@
             const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             
+            // Create filename with current timestamp
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `calendar_${timestamp}.ics`;
+            
             // Create a temporary download link for the ICS file
             const link = document.createElement('a');
             link.href = url;
-            link.download = `calendar_${new Date().toISOString().split('T')[0]}.ics`;
+            link.download = filename;
             link.click();
             
-            // Generate webcal URL (note: this would need to be hosted somewhere for real webcal:// support)
-            const webcalUrl = `webcal://natthasath.github.io/vibe-ics-calendar/calendar_${new Date().toISOString().split('T')[0]}.ics`;
+            // Generate webcal URLs for different hosting scenarios
+            const githubUser = 'natthasath'; // Change this to your GitHub username
+            const repoName = 'vibe-ics-calendar'; // Change this to your repository name
             
-            document.getElementById('webcalLink').textContent = webcalUrl;
+            const webcalUrls = {
+                github: `webcal://${githubUser}.github.io/${repoName}/${filename}`,
+                githubHTTPS: `https://${githubUser}.github.io/${repoName}/${filename}`,
+                local: `webcal://localhost:8000/${filename}` // For local testing
+            };
+            
+            // Display all options
+            document.getElementById('webcalLink').innerHTML = `
+                <h5>🐙 GitHub Pages (Recommended):</h5>
+                <div style="background: #e3f2fd; padding: 10px; margin: 5px 0; border-radius: 5px; font-family: monospace;">
+                    ${webcalUrls.github}
+                </div>
+                <div style="background: #f3e5f5; padding: 10px; margin: 5px 0; border-radius: 5px; font-family: monospace;">
+                    ${webcalUrls.githubHTTPS}
+                </div>
+                
+                <h5>📝 Setup Instructions:</h5>
+                <ol style="margin-left: 20px; color: #555;">
+                    <li>Upload the downloaded <strong>${filename}</strong> to your GitHub repository</li>
+                    <li>Enable GitHub Pages in repository settings</li>
+                    <li>Use the webcal:// URL above in your calendar app</li>
+                    <li>If webcal:// doesn't work, try the HTTPS URL instead</li>
+                </ol>
+                
+                <h5>🔄 Auto-update Setup:</h5>
+                <div style="background: #fff3cd; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                    <small>For automatic updates, you'll need to re-upload the .ics file to GitHub whenever events change.</small>
+                </div>
+            `;
+            
             document.getElementById('webcalInfo').style.display = 'block';
             
-            // Also show instructions
-            alert(`📥 ICS file downloaded successfully!\n\n📋 To add to your calendar:\n\n1. For immediate use: Open the downloaded .ics file\n2. For subscription: Host the .ics file on a web server and use webcal:// URL\n\nThe webcal:// link is shown below the calendar.`);
+            // Copy to clipboard functionality
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = '📋 Copy webcal:// URL';
+            copyBtn.style.cssText = 'background: #4caf50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin: 10px 0;';
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(webcalUrls.github).then(() => {
+                    copyBtn.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = '📋 Copy webcal:// URL';
+                    }, 2000);
+                });
+            };
+            document.getElementById('webcalLink').appendChild(copyBtn);
+            
+            alert(`📥 ICS file downloaded: ${filename}\n\n🚀 Next steps:\n1. Upload ${filename} to your GitHub repository\n2. Enable GitHub Pages\n3. Use the webcal:// URL shown below\n\n💡 The URL will be:\nwebcal://${githubUser}.github.io/${repoName}/${filename}`);
             
             URL.revokeObjectURL(url);
         }
